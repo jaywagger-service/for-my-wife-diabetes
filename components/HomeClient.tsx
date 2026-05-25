@@ -13,7 +13,6 @@ import {
   fmtTime,
   currentWeek,
   statusForReading,
-  contextShortLabel,
   computeInsights,
 } from "@/lib/utils";
 import type { GlucoseContext } from "@/lib/db";
@@ -26,10 +25,21 @@ const HOME_SLOTS: { context: GlucoseContext; label: string }[] = [
   { context: "pp1h_dinner", label: "저녁후" },
 ];
 
+function makeTodayIso() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
 export function HomeClient() {
   const router = useRouter();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [insightIdx, setInsightIdx] = useState(0);
+
+  // Recalculated on visibility change so overnight stays are handled correctly
+  const [todayIso, setTodayIso] = useState(makeTodayIso);
+  const [cutoff7Iso, setCutoff7Iso] = useState(() => daysAgo(7).toISOString());
+  const [todayStr, setTodayStr] = useState(todayKey);
 
   useEffect(() => {
     getSettings().then((s) => {
@@ -38,23 +48,32 @@ export function HomeClient() {
     });
   }, [router]);
 
-  const cutoff7 = daysAgo(7);
-  const todayStr = todayKey();
-  const todayStart = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+  // Refresh date boundaries when user returns to the app
+  useEffect(() => {
+    function handleVisibility() {
+      if (!document.hidden) {
+        setTodayIso(makeTodayIso());
+        setCutoff7Iso(daysAgo(7).toISOString());
+        setTodayStr(todayKey());
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
 
   const todayGlucose = useLiveQuery(
-    () => db.glucose.where("ts").aboveOrEqual(todayStart.toISOString()).toArray(),
-    []
+    () => db.glucose.where("ts").aboveOrEqual(todayIso).toArray(),
+    [todayIso]
   );
 
   const weekGlucose = useLiveQuery(
-    () => db.glucose.where("ts").aboveOrEqual(cutoff7.toISOString()).toArray(),
-    []
+    () => db.glucose.where("ts").aboveOrEqual(cutoff7Iso).toArray(),
+    [cutoff7Iso]
   );
 
   const weekExercise = useLiveQuery(
-    () => db.exercise.where("ts").aboveOrEqual(cutoff7.toISOString()).toArray(),
-    []
+    () => db.exercise.where("ts").aboveOrEqual(cutoff7Iso).toArray(),
+    [cutoff7Iso]
   );
 
   const recentMeals = useLiveQuery(
@@ -63,8 +82,8 @@ export function HomeClient() {
   );
 
   const weekMeals = useLiveQuery(
-    () => db.meals.where("ts").aboveOrEqual(cutoff7.toISOString()).toArray(),
-    []
+    () => db.meals.where("ts").aboveOrEqual(cutoff7Iso).toArray(),
+    [cutoff7Iso]
   );
 
   if (!settings) return null;
@@ -75,7 +94,7 @@ export function HomeClient() {
     pp2h: settings.targetPp2h,
   };
 
-  // Today readings
+  // Today readings — filter by todayStr to guard against tz edge cases
   const todayFiltered = (todayGlucose ?? []).filter(
     (g) => dayKey(g.ts) === todayStr
   );
