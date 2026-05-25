@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { db, getSettings } from "@/lib/db";
 import { migrateV0ToV1 } from "@/lib/migration/v0-to-v1";
-import { statusForReading, currentWeek } from "@/lib/utils";
+import { addGlucose, getGlucoseInRange, getTodayGlucose } from "@/lib/repository/glucose";
+import { addMeal, getRecentMeals } from "@/lib/repository/meals";
+import { addExercise, getExerciseInRange } from "@/lib/repository/exercise";
+import { statusForReading, currentWeek, computeInsights, dayKey } from "@/lib/utils";
+import { notificationStatusLabel } from "@/lib/notification";
 import type { Settings } from "@/lib/db";
 
 // ============================================================
@@ -217,5 +221,146 @@ describe("migrateV0ToV1", () => {
     const settings = await getSettings();
     expect(settings.setupDone).toBe(false);
     expect(settings.v0MigrationDone).toBe(true);
+  });
+});
+
+// ============================================================
+// notificationStatusLabel (순수 함수)
+// ============================================================
+
+describe("notificationStatusLabel", () => {
+  it("granted → 앱 오픈 안내 메시지", () => {
+    expect(notificationStatusLabel("granted")).toContain("열어두면");
+  });
+  it("denied → 설정 안내 메시지", () => {
+    expect(notificationStatusLabel("denied")).toContain("설정");
+  });
+  it("unsupported → 지원 안 됨 메시지", () => {
+    expect(notificationStatusLabel("unsupported")).toContain("지원");
+  });
+  it("ios-not-installed → 홈 화면 추가 안내", () => {
+    expect(notificationStatusLabel("ios-not-installed")).toContain("홈 화면");
+  });
+  it("default → 팝업 안내 메시지", () => {
+    expect(notificationStatusLabel("default")).toContain("팝업");
+  });
+});
+
+// ============================================================
+// repository smoke tests
+// ============================================================
+
+describe("glucose repository", () => {
+  beforeEach(async () => {
+    await db.glucose.clear();
+    await db.settings.clear();
+  });
+
+  it("addGlucose → getGlucoseInRange로 조회", async () => {
+    const from = new Date("2025-05-01T00:00:00Z");
+    await addGlucose(92, "fasting", "2025-05-01T07:00:00Z");
+    await addGlucose(138, "pp1h_breakfast", "2025-05-01T10:00:00Z");
+
+    const records = await getGlucoseInRange(from);
+    expect(records).toHaveLength(2);
+  });
+
+  it("getTodayGlucose는 오늘 날짜 기록만 반환", async () => {
+    // yesterday
+    await addGlucose(85, "fasting", new Date(Date.now() - 86400000).toISOString());
+    // today
+    await addGlucose(90, "fasting");
+
+    const today = await getTodayGlucose();
+    expect(today).toHaveLength(1);
+    expect(today[0].value).toBe(90);
+  });
+});
+
+describe("meal repository", () => {
+  beforeEach(async () => {
+    await db.meals.clear();
+  });
+
+  it("addMeal → getRecentMeals에 포함됨", async () => {
+    await addMeal({ photo: null, mealTime: "lunch", orderOk: true, note: "테스트" });
+    const meals = await getRecentMeals(5);
+    expect(meals).toHaveLength(1);
+    expect(meals[0].mealTime).toBe("lunch");
+    expect(meals[0].orderOk).toBe(true);
+  });
+});
+
+describe("exercise repository", () => {
+  beforeEach(async () => {
+    await db.exercise.clear();
+  });
+
+  it("addExercise → getExerciseInRange로 조회", async () => {
+    await addExercise(15);
+    const from = new Date(Date.now() - 60000);
+    const records = await getExerciseInRange(from);
+    expect(records).toHaveLength(1);
+    expect(records[0].duration).toBe(15);
+  });
+});
+
+// ============================================================
+// computeInsights
+// ============================================================
+
+describe("computeInsights", () => {
+  const targets = { fasting: 95, pp1h: 140, pp2h: 120 };
+
+  it("측정 4건 미만이면 베이스라인 메시지 반환", () => {
+    const result = computeInsights({
+      glucoseRecords: [
+        { id: "1", ts: new Date().toISOString(), value: 90, context: "fasting" },
+      ],
+      mealRecords: [],
+      exerciseRecords: [],
+      targets,
+    });
+    expect(result[0]).toContain("베이스라인");
+  });
+
+  it("공복 초과율 50% 이상이면 인슐린 권고 메시지", () => {
+    const base = new Date();
+    const records = Array.from({ length: 8 }, (_, i) => ({
+      id: String(i),
+      ts: new Date(base.getTime() - i * 86400000).toISOString(),
+      value: i % 2 === 0 ? 100 : 88, // 4개 초과 / 4개 정상 → 50%
+      context: "fasting" as const,
+    }));
+    const result = computeInsights({
+      glucoseRecords: records,
+      mealRecords: [],
+      exerciseRecords: [],
+      targets,
+    });
+    expect(result[0]).toContain("인슐린");
+  });
+
+  it("모두 목표 내이면 격려 메시지", () => {
+    const base = new Date();
+    const fastings = Array.from({ length: 5 }, (_, i) => ({
+      id: "f" + i,
+      ts: new Date(base.getTime() - i * 86400000).toISOString(),
+      value: 85,
+      context: "fasting" as const,
+    }));
+    const pp1hs = Array.from({ length: 5 }, (_, i) => ({
+      id: "p" + i,
+      ts: new Date(base.getTime() - i * 86400000 + 3600000).toISOString(),
+      value: 120,
+      context: "pp1h_breakfast" as const,
+    }));
+    const result = computeInsights({
+      glucoseRecords: [...fastings, ...pp1hs],
+      mealRecords: [],
+      exerciseRecords: [],
+      targets,
+    });
+    expect(result[0]).toContain("잘 관리");
   });
 });
