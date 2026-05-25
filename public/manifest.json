@@ -2,6 +2,7 @@
   "name": "For my wife",
   "short_name": "For my wife",
   "description": "작게나마 도움이 되면 좋겠어",
+  "author": "Jaywagger",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf7f1",
