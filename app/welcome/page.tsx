@@ -32,8 +32,9 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="min-h-dvh bg-bg flex flex-col px-6 py-10 justify-between">
+    <div className="min-h-dvh bg-bg">
       <ToastProvider />
+      <div className="max-w-[480px] mx-auto min-h-dvh flex flex-col px-6 py-10 justify-between">
       <div className="mt-10">
         <div className="text-[11px] tracking-[0.2em] text-gold uppercase mb-[18px]">
           임신성 당뇨 관리
@@ -58,7 +59,7 @@ export default function WelcomePage() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="예: 지영"
+            placeholder="예: 본인 이름 또는 호칭"
             className="w-full bg-card border border-line rounded-[12px] px-4 py-3.5 text-ink focus:outline-none focus:border-accent"
           />
         </div>
@@ -82,6 +83,7 @@ export default function WelcomePage() {
         >
           시작하기
         </button>
+      </div>
       </div>
     </div>
   );
