@@ -1,0 +1,101 @@
+{
+  "version": "1.0",
+  "project": "for-my-wife",
+  "updated_at": "2026-05-25T18:00:00Z",
+  "updated_by": "claude-code",
+
+  "current_task": {
+    "id": "T-2026-05-25-003",
+    "title": "v1 정식 배포 + 휴대폰 PWA 테스트",
+    "owner": "jaywagger",
+    "status": "pending",
+    "started_at": null,
+    "spec_refs": [],
+    "output_files": [],
+    "subtasks": [
+      {
+        "id": "T-003-1",
+        "title": "Vercel 배포 확인 (자동 배포 완료 여부)",
+        "status": "pending"
+      },
+      {
+        "id": "T-003-2",
+        "title": "휴대폰 Safari/Chrome PWA 홈 화면 추가",
+        "status": "pending"
+      },
+      {
+        "id": "T-003-3",
+        "title": "v0 데이터 마이그레이션 실제 동작 확인",
+        "status": "pending"
+      },
+      {
+        "id": "T-003-4",
+        "title": "식후 1h 알림 실기기 테스트",
+        "status": "pending"
+      }
+    ]
+  },
+
+  "last_review": {
+    "by": "codex",
+    "at": "2026-05-25T17:18:00Z",
+    "result": "pass",
+    "report": "reviews/results/20260525-1718-codex-v1-002.md",
+    "summary": "PASS - P0/P1 수정 완료, 자동검사 및 단위테스트 통과"
+  },
+
+  "history": [
+    {
+      "id": "FOLLOWUP-2026-05-25",
+      "title": "Codex PASS 후속 일괄 작업 (AGENTS.md 강화 + ADR-010/011 + V1.1-BACKLOG)",
+      "owner": "claude-code",
+      "status": "completed",
+      "result": "pass",
+      "completed_at": "2026-05-25T18:00:00Z",
+      "changed_files": [
+        "AGENTS.md",
+        "docs/INDEX.md",
+        "docs/DECISIONS.md",
+        "docs/V1.1-BACKLOG.md",
+        "public/manifest.json",
+        "reviews/status.json",
+        "reviews/templates/CODEX-REVIEW-PROMPT.md"
+      ]
+    },
+    {
+      "id": "T-2026-05-25-002",
+      "title": "Codex P0 피드백 4건 수정",
+      "owner": "claude-code",
+      "status": "review_completed",
+      "result": "pass",
+      "completed_at": "2026-05-25T17:18:00Z",
+      "review_report": "reviews/results/20260525-1718-codex-v1-002.md"
+    },
+    {
+      "id": "T-2026-05-25-001",
+      "title": "v0 → v1 Next.js 마이그레이션",
+      "owner": "claude-code",
+      "status": "review_completed",
+      "result": "fail",
+      "completed_at": "2026-05-25T16:00:00Z",
+      "review_report": "reviews/results/20260525-1600-codex-v1-initial.md"
+    },
+    {
+      "id": "T-2026-05-25-000",
+      "title": "v0 단일 HTML PWA 작성",
+      "owner": "claude-web",
+      "status": "completed",
+      "result": "pass",
+      "completed_at": "2026-05-25T15:00:00Z"
+    }
+  ],
+
+  "rules": {
+    "claude_code_can_set_pass": false,
+    "codex_can_set_pass": true,
+    "human_must_close": true,
+    "comment": "Claude Code는 자기 작업을 result:pass로 박을 수 없음. Codex만 가능. Jaywagger가 최종 status:completed로 닫음."
+  },
+
+  "post_review_todos": []
+}
