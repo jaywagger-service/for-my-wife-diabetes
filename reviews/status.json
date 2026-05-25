@@ -6,32 +6,26 @@
 
   "current_task": {
     "id": "T-2026-05-25-003",
-    "title": "v1 정식 배포 + 휴대폰 PWA 테스트",
-    "owner": "jaywagger",
-    "status": "pending",
-    "started_at": null,
-    "spec_refs": [],
-    "output_files": [],
+    "title": "Codex 3차 FAIL P0/P1 수정 — welcome placeholder + max-width",
+    "owner": "claude-code",
+    "status": "review_pending",
+    "started_at": "2026-05-25T22:20:00Z",
+    "spec_refs": [
+      "reviews/results/20260525-2218-codex-v1-003.md"
+    ],
+    "output_files": [
+      "app/welcome/page.tsx"
+    ],
     "subtasks": [
       {
-        "id": "T-003-1",
-        "title": "Vercel 배포 확인 (자동 배포 완료 여부)",
-        "status": "pending"
+        "id": "P0-BLOCKER",
+        "title": "placeholder '예: 지영' → '예: 본인 이름 또는 호칭' (ADR-004 위반 수정)",
+        "status": "completed"
       },
       {
-        "id": "T-003-2",
-        "title": "휴대폰 Safari/Chrome PWA 홈 화면 추가",
-        "status": "pending"
-      },
-      {
-        "id": "T-003-3",
-        "title": "v0 데이터 마이그레이션 실제 동작 확인",
-        "status": "pending"
-      },
-      {
-        "id": "T-003-4",
-        "title": "식후 1h 알림 실기기 테스트",
-        "status": "pending"
+        "id": "P1-MAJOR",
+        "title": "welcome 컨테이너 max-w-[480px] 추가 (태블릿/PC 레이아웃 깨짐 수정)",
+        "status": "completed"
       }
     ]
   },
