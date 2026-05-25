@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import { addMeal, mealTimeLabel } from "@/lib/repository/meals";
 import { ToastProvider, toast } from "@/components/ui/Toast";
 import { autoDetectMealTime, resizeImage, cn } from "@/lib/utils";
+import {
+  getNotificationSupport,
+  requestNotificationPermission,
+  schedulePostMealReminder,
+  notificationStatusLabel,
+  type NotificationSupport,
+} from "@/lib/notification";
 import type { MealTime } from "@/lib/db";
 
 const MEAL_TIMES: MealTime[] = ["breakfast", "lunch", "dinner", "snack"];
@@ -19,6 +26,16 @@ export default function MealPage() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const [notifySupport, setNotifySupport] = useState<NotificationSupport>("unsupported");
+
+  useEffect(() => {
+    setNotifySupport(getNotificationSupport());
+  }, []);
+
+  const notifyAvailable =
+    notifySupport !== "unsupported" && notifySupport !== "ios-not-installed";
+
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -30,12 +47,43 @@ export default function MealPage() {
     }
   }
 
+  async function handleNotifyToggle() {
+    if (!notifyAvailable) return;
+
+    if (notifyEnabled) {
+      setNotifyEnabled(false);
+      return;
+    }
+
+    // Need to request permission if not yet granted
+    if (notifySupport === "default") {
+      const result = await requestNotificationPermission();
+      setNotifySupport(result);
+      if (result === "granted") setNotifyEnabled(true);
+      else if (result === "denied") {
+        toast("알림 권한이 거부됐어요. 기기 설정에서 허용해주세요.");
+      }
+      return;
+    }
+
+    if (notifySupport === "granted") {
+      setNotifyEnabled(true);
+    }
+  }
+
   async function handleSave() {
     if (saving) return;
     setSaving(true);
     try {
       await addMeal({ photo, mealTime, orderOk, note: note.trim() });
-      toast("식사가 저장됐어요. 1시간 후 혈당 측정 기억해주세요.");
+
+      if (notifyEnabled && notifySupport === "granted") {
+        schedulePostMealReminder(mealTimeLabel(mealTime));
+        toast("저장됐어요. 1시간 후 알림을 보내드릴게요.");
+      } else {
+        toast("식사가 저장됐어요. 1시간 후 혈당 측정 기억해주세요.");
+      }
+
       setTimeout(() => router.replace("/"), 600);
     } catch {
       toast("저장에 실패했어요");
@@ -133,6 +181,49 @@ export default function MealPage() {
               className={cn(
                 "absolute w-[22px] h-[22px] bg-white rounded-full top-[3px] shadow transition-all",
                 orderOk ? "left-[25px]" : "left-[3px]"
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Notification opt-in */}
+        <div
+          className={cn(
+            "flex bg-card border border-line rounded-[12px] px-4 py-3.5 items-center justify-between mb-3.5 gap-3",
+            notifyAvailable && notifySupport !== "denied" ? "cursor-pointer" : "opacity-70"
+          )}
+          onClick={handleNotifyToggle}
+        >
+          <div className="flex-1 min-w-0">
+            <div className="text-[14px] font-medium">1시간 후 측정 알림 받기</div>
+            <div
+              className={cn(
+                "text-[11px] mt-0.5",
+                notifySupport === "denied" || !notifyAvailable
+                  ? "text-warn"
+                  : "text-ink-faint"
+              )}
+            >
+              {notifyEnabled
+                ? "저장 후 1시간 뒤 알려드려요"
+                : notificationStatusLabel(notifySupport)}
+            </div>
+          </div>
+          {/* Toggle pill — disabled if not available or denied */}
+          <div
+            className={cn(
+              "w-[50px] h-[28px] rounded-full relative transition-colors flex-none",
+              notifyEnabled && notifyAvailable && notifySupport !== "denied"
+                ? "bg-accent"
+                : "bg-bg-soft"
+            )}
+          >
+            <div
+              className={cn(
+                "absolute w-[22px] h-[22px] bg-white rounded-full top-[3px] shadow transition-all",
+                notifyEnabled && notifyAvailable && notifySupport !== "denied"
+                  ? "left-[25px]"
+                  : "left-[3px]"
               )}
             />
           </div>
