@@ -1,14 +1,14 @@
 {
   "version": "1.0",
   "project": "for-my-wife",
-  "updated_at": "2026-05-25T18:00:00Z",
-  "updated_by": "claude-code",
+  "updated_at": "2026-05-25T22:30:10+09:00",
+  "updated_by": "codex",
 
   "current_task": {
     "id": "T-2026-05-25-003",
-    "title": "Codex 3차 FAIL P0/P1 수정 — welcome placeholder + max-width",
+    "title": "Codex 3차 FAIL P0/P1 수정 — welcome placeholder 일반화 + max-width",
     "owner": "claude-code",
-    "status": "review_pending",
+    "status": "passed",
     "started_at": "2026-05-25T22:20:00Z",
     "spec_refs": [
       "reviews/results/20260525-2218-codex-v1-003.md"
@@ -19,7 +19,7 @@
     "subtasks": [
       {
         "id": "P0-BLOCKER",
-        "title": "placeholder '예: 지영' → '예: 본인 이름 또는 호칭' (ADR-004 위반 수정)",
+        "title": "placeholder 실명형 예시 → 일반화 표현 (ADR-004 위반 수정)",
         "status": "completed"
       },
       {
@@ -32,13 +32,22 @@
 
   "last_review": {
     "by": "codex",
-    "at": "2026-05-25T17:18:00Z",
+    "at": "2026-05-25T22:30:10+09:00",
     "result": "pass",
-    "report": "reviews/results/20260525-1718-codex-v1-002.md",
-    "summary": "PASS - P0/P1 수정 완료, 자동검사 및 단위테스트 통과"
+    "report": "reviews/results/20260525-2230-codex-v1-004.md",
+    "summary": "4차 검증 PASS. 3차 P0 placeholder 및 P1 welcome max-width 결함 해결 확인."
   },
 
   "history": [
+    {
+      "id": "T-2026-05-25-003-R3",
+      "title": "Codex 3차 검증 — welcome placeholder/레이아웃 결함 발견",
+      "owner": "codex",
+      "status": "review_completed",
+      "result": "fail",
+      "completed_at": "2026-05-25T22:18:00+09:00",
+      "review_report": "reviews/results/20260525-2218-codex-v1-003.md"
+    },
     {
       "id": "FOLLOWUP-2026-05-25",
       "title": "Codex PASS 후속 일괄 작업 (AGENTS.md 강화 + ADR-010/011 + V1.1-BACKLOG)",
