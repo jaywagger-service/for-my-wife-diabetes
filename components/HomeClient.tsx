@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -41,12 +43,29 @@ export function HomeClient() {
   const [cutoff7Iso, setCutoff7Iso] = useState(() => daysAgo(7).toISOString());
   const [todayStr, setTodayStr] = useState(todayKey);
 
+  // useEffect(() => {
+  //   getSettings().then((s) => {
+  //     setSettings(s);
+  //     if (!s.setupDone) router.replace("/welcome");
+  //   });
+  // }, [router]);
   useEffect(() => {
-    getSettings().then((s) => {
+  async function init() {
+    try {
+      const s = await getSettings();
+
       setSettings(s);
-      if (!s.setupDone) router.replace("/welcome");
-    });
-  }, [router]);
+
+      if (!s.setupDone) {
+        router.replace("/welcome");
+      }
+    } catch (err) {
+      console.error("settings load failed", err);
+    }
+  }
+
+  init();
+}, [router]);
 
   // Refresh date boundaries when user returns to the app
   useEffect(() => {
