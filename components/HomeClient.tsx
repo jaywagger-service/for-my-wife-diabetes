@@ -86,7 +86,13 @@ export function HomeClient() {
     [cutoff7Iso]
   );
 
-  if (!settings) return null;
+  if (!settings) {
+    return (
+      <div className="p-10">
+        loading...
+      </div>
+    );
+  }
 
   const targets = {
     fasting: settings.targetFasting,
